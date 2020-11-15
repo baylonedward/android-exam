@@ -26,17 +26,18 @@ import javax.inject.Singleton
 class AppModule {
 
   @Provides
-  fun providMoshi() = Moshi.Builder().build()
+  fun provideMoshi(): Moshi = Moshi.Builder().build()
 
   @Provides
   @Singleton
-  fun provideOkHttpClient(loggingInterceptor: LoggingInterceptor) = OkHttpClient.Builder()
-    .addInterceptor(loggingInterceptor)
-    .build()
+  fun provideOkHttpClient(loggingInterceptor: LoggingInterceptor): OkHttpClient =
+    OkHttpClient.Builder()
+      .addInterceptor(loggingInterceptor)
+      .build()
 
   @Provides
   @Singleton
-  fun provideRetrofit(moshi: Moshi, okHttpClient: OkHttpClient) = Retrofit.Builder()
+  fun provideRetrofit(moshi: Moshi, okHttpClient: OkHttpClient): Retrofit = Retrofit.Builder()
     .baseUrl("https://randomuser.me")
     .addConverterFactory(MoshiConverterFactory.create(moshi))
     .client(okHttpClient)
@@ -44,7 +45,8 @@ class AppModule {
 
   @Provides
   @Singleton
-  fun provideRandomUserService(retrofit: Retrofit) = retrofit.create(RandomUserService::class.java)
+  fun provideRandomUserService(retrofit: Retrofit): RandomUserService =
+    retrofit.create(RandomUserService::class.java)
 
   @Provides
   @Singleton

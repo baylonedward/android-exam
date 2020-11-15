@@ -2,6 +2,7 @@ plugins {
     id 'com.android.application'
     id 'kotlin-android'
     id 'kotlin-kapt'
+    id 'dagger.hilt.android.plugin'
 }
 
 android {
@@ -17,12 +18,14 @@ android {
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
-
     buildTypes {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
+    }
+    buildFeatures {
+        viewBinding true
     }
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
@@ -52,6 +55,12 @@ dependencies {
 
     // Constraint Layout
     implementation 'androidx.constraintlayout:constraintlayout:2.0.4'
+
+    // navigation
+    implementation "androidx.navigation:navigation-fragment-ktx:$nav_version"
+    implementation "androidx.navigation:navigation-ui-ktx:$nav_version"
+    implementation 'androidx.legacy:legacy-support-v4:1.0.0'
+    apply plugin: "androidx.navigation.safeargs.kotlin"
 
     // Android Room
     def room_version = "2.2.5"
