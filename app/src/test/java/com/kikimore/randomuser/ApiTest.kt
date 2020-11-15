@@ -20,7 +20,7 @@ import retrofit2.converter.moshi.MoshiConverterFactory
 
 @RunWith(JUnit4::class)
 class ApiTest {
-  private val baseUrl = "https://randomuser.me/"
+  private val baseUrl = "https://randomuser.me"
   private lateinit var okHttpClient: OkHttpClient
   private lateinit var retrofit: Retrofit
   private lateinit var randomUserService: RandomUserService
