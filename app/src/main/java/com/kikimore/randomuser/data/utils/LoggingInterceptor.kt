@@ -2,12 +2,13 @@ package com.kikimore.randomuser.data.utils
 
 import okhttp3.Interceptor
 import okhttp3.Response
+import javax.inject.Inject
 
 /**
  * Created by: ebaylon.
  * Created on: 19/10/2020.
  */
-class LoggingInterceptor constructor() : Interceptor {
+class LoggingInterceptor @Inject constructor() : Interceptor {
   override fun intercept(chain: Interceptor.Chain): Response {
     val chainRequest = chain.request()
     //request
