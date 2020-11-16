@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kikimore.randomuser.data.entities.local.Person
 import com.kikimore.randomuser.data.repository.PersonRepository
+import com.kikimore.randomuser.data.utils.Resource
 import com.kikimore.randomuser.features.person.master.PersonListAdapter
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
@@ -18,20 +19,29 @@ class PersonViewModel @ViewModelInject constructor(private val personRepository:
   ViewModel(), PersonListAdapter.PersonListItemInterface {
 
   val personsList = MutableStateFlow<List<Person>?>(null)
-  val errorMessage = MutableStateFlow<String?>(null)
+  val infoMessage = MutableStateFlow<String?>(null)
   val selectedPerson = MutableStateFlow<Person?>(null)
   val onSelect = MutableStateFlow(false)
+
+  private fun <T> evaluateResource(resource: Resource<T>): T? {
+    when (resource) {
+      is Resource.Error -> infoMessage.value = resource.message
+      is Resource.Loading -> infoMessage.value = resource.message
+      is Resource.Success -> return resource.data
+    }
+    return null
+  }
 
   private fun getPerson(position: Int) = personsList.value?.get(position)
 
   fun getPersons() {
     personRepository.getPersons()
       .distinctUntilChanged()
-      .catch { errorMessage.value = it.message }
-      .onEach { persons ->
-        persons.sortedBy { it.firstName }.also {
+      .catch { infoMessage.value = it.message }
+      .onEach { resource ->
+        evaluateResource(resource)?.also {
           personsList.value = it
-          if (!it.isNullOrEmpty()) selectedPerson.value = it[0]
+          if (!it.isNullOrEmpty() && selectedPerson.value == null) selectedPerson.value = it[0]
         }
       }.launchIn(viewModelScope)
   }
@@ -55,7 +65,6 @@ class PersonViewModel @ViewModelInject constructor(private val personRepository:
   }
 
   override fun getOnClick(position: Int): () -> Unit = {
-    println("Name: ${getPerson(position)?.firstName}")
     selectedPerson.value = getPerson(position)
     onSelect.value = true
     onSelect.value = false

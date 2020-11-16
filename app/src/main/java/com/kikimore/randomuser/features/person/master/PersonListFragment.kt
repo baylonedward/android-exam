@@ -9,7 +9,6 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.NavHostFragment
-import androidx.recyclerview.widget.LinearLayoutManager
 import com.kikimore.randomuser.R
 import com.kikimore.randomuser.databinding.FragmentPersonListBinding
 import com.kikimore.randomuser.features.person.PersonViewModel
@@ -57,15 +56,17 @@ class PersonListFragment : Fragment() {
   }
 
   private fun setObservers() {
+    // list
     viewModel.personsList.onEach {
       if (it == null) return@onEach
       println("Bind: ${listAdapter.itemCount}")
       listAdapter.notifyDataSetChanged()
     }.launchIn(lifecycleScope)
-    viewModel.errorMessage.onEach {
+    // info message
+    viewModel.infoMessage.onEach {
       if (it == null) return@onEach
       toast(it)
-    }
+    }.launchIn(lifecycleScope)
   }
 
   private fun toast(message: String) {

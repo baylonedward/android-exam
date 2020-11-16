@@ -8,6 +8,7 @@ import com.kikimore.randomuser.data.local.RandomUserDatabase
 import com.kikimore.randomuser.data.remote.RandomUserService
 import com.kikimore.randomuser.data.repository.PersonRepository
 import com.kikimore.randomuser.data.utils.LoggingInterceptor
+import com.kikimore.randomuser.data.utils.Resource
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.collect
@@ -15,6 +16,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import okhttp3.OkHttpClient
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -42,9 +44,19 @@ class RepositoryTest {
       launch {
         testSetup.personRepository.getPersons(count)
           .collect {
-            if (it.isNotEmpty()) {
-              assertEquals(it.size, count)
-              cancel()
+            when (it) {
+              is Resource.Success -> {
+                if (it.data.isNotEmpty()) {
+                  assertEquals(it.data.size, count)
+                  cancel()
+                }
+              }
+              is Resource.Error -> {
+                assertNull(it.message)
+                cancel()
+              }
+              is Resource.Loading -> {
+              }
             }
           }
       }

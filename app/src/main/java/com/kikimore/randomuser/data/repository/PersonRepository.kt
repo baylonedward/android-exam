@@ -1,13 +1,14 @@
 package com.kikimore.randomuser.data.repository
 
-import android.util.Log
 import com.kikimore.randomuser.data.entities.local.Person
 import com.kikimore.randomuser.data.local.PersonDao
 import com.kikimore.randomuser.data.remote.RandomUserService
+import com.kikimore.randomuser.data.utils.Resource
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import retrofit2.Response
 
 /**
  * Created by: ebaylon.
@@ -18,13 +19,25 @@ class PersonRepository(
   private val localDataSource: PersonDao
 ) {
 
+  private suspend fun <T> evaluateCall(call: suspend () -> Response<T>): Resource<T> {
+    try {
+      val response = call()
+      if (response.isSuccessful) {
+        val body = response.body()
+        if (body != null) return Resource.Success(body)
+      }
+      return Resource.Error(" ${response.code()} ${response.message()}")
+    } catch (e: Exception) {
+      return Resource.Error(e.message ?: e.toString())
+    }
+  }
+
   @ExperimentalCoroutinesApi
-  fun getPersons(count: Int = 20): Flow<List<Person>> = channelFlow {
+  fun getPersons(count: Int = 20): Flow<Resource<List<Person>>> = channelFlow {
     // launch new job to return data from local
     launch {
       localDataSource.all().collect {
-        Log.i("local data size", "${it.size}")
-        send(it)
+        send(Resource.Success(it))
       }
     }
     // invoke api call if person table is empty
@@ -33,13 +46,14 @@ class PersonRepository(
       val results = count.toString()
       val inc = arrayOf("name", "location", "email", "dob", "cell")
       val parameters = mapOf(RESULTS to results, INCLUDE to inc.joinToString())
-      remoteDataSource.getRandomUsers(parameters).also { request ->
+      when (val response = evaluateCall { remoteDataSource.getRandomUsers(parameters) }) {
         // if success
-        if (request.isSuccessful) {
-          request.body()?.results?.also { users ->
-            // if result not null insert in local data source
-            localDataSource.insert(users.map { it.toPerson() })
-          }
+        is Resource.Success -> {
+          // if result not null insert in local data source
+          localDataSource.insert(response.data.results.map { it.toPerson() })
+        }
+        is Resource.Error -> send(Resource.Error(message = response.message))
+        else -> {
         }
       }
     }
